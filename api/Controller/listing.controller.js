@@ -1,63 +1,28 @@
-import mongoose from 'mongoose';
+import Listing from '../models/listing.model.js';
+export const createListing = async (req, res, next) => {
+  try {
+    const listing = await Listing.create(req.body);
+    return res.status(201).json(listing);
+  } catch (error) {
+    next(error);
+  }
+};
 
-const listingSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-    },
-    description: {
-      type: String,
-      required: true,
-    },
-    address: {
-      type: String,
-      required: true,
-    },
-    regularPrice: {
-      type: Number,
-      required: true,
-    },
-    discountPrice: {
-      type: Number,
-      required: true,
-    },
-    bathrooms: {
-      type: Number,
-      required: true,
-    },
-    bedrooms: {
-      type: Number,
-      required: true,
-    },
-    furnished: {
-      type: Boolean,
-      required: true,
-    },
-    parking: {
-      type: Boolean,
-      required: true,
-    },
-    type: {
-      type: String,
-      required: true,
-    },
-    offer: {
-      type: Boolean,
-      required: true,
-    },
-    imageUrls: {
-      type: Array,
-      required: true,
-    },
-    userRef: {
-      type: String,
-      required: true,
-    },
-  },
-  { timestamps: true }
-);
+export const deleteListing = async (req, res, next) => {
+  const listing = await Listing.findById(req.params.id);
 
-const Listing = mongoose.model('Listing', listingSchema);
+  if (!listing) {
+    return next(errorHandler(404, 'Listing not found!'));
+  }
 
-export default Listing;
+  if (req.user.id !== listing.userRef) {
+    return next(errorHandler(401, 'You can only delete your own listings!'));
+  }
+
+  try {
+    await Listing.findByIdAndDelete(req.params.id);
+    res.status(200).json('Listing has been deleted!');
+  } catch (error) {
+    next(error);
+  }
+};
